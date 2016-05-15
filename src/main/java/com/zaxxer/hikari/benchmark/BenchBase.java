@@ -16,38 +16,31 @@
 
 package com.zaxxer.hikari.benchmark;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.Properties;
-
-import javax.sql.DataSource;
-
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import leap.db.cp.PooledDataSource;
+import one.datasource.DataSourceImpl;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
 import org.apache.tomcat.jdbc.pool.PooledConnection;
 import org.apache.tomcat.jdbc.pool.Validator;
-import org.openjdk.jmh.annotations.Level;
-import org.openjdk.jmh.annotations.Param;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.Setup;
-import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.TearDown;
+import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.BenchmarkParams;
 import org.vibur.dbcp.ViburDBCPDataSource;
 
-import com.mchange.v2.c3p0.ComboPooledDataSource;
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
-
-import one.datasource.DataSourceImpl;
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.Properties;
 
 @State(Scope.Benchmark)
 public class BenchBase
 {
     protected static final int MIN_POOL_SIZE = 0;
 
-    @Param({ "hikari", "dbcp", "dbcp2", "tomcat", "c3p0", "vibur", "one" })
+    @Param({ "hikari", "dbcp", "dbcp2", "tomcat", "c3p0", "vibur", "one", "leap" })
     public String pool;
 
     @Param({ "32" })
@@ -98,6 +91,9 @@ public class BenchBase
             break;
         case "one":
             setupOne();
+            break;
+        case "leap":
+            setupLeap();
             break;
         }
     }
@@ -268,5 +264,17 @@ public class BenchBase
         props.put("driver", "com.zaxxer.hikari.benchmark.stubs.StubDriver");
         
         DS = new DataSourceImpl("one", props);
+    }
+
+    private void setupLeap() {
+        PooledDataSource ds = new PooledDataSource();
+        ds.setUrl(jdbcUrl);
+        ds.setUsername("brettw");
+        ds.setPassword("");
+        ds.setMinIdle(MIN_POOL_SIZE);
+        ds.setMaxIdle(maxPoolSize);
+        ds.setMaxActive(maxPoolSize);
+        ds.setDefaultAutoCommit(false);
+        DS = ds;
     }
 }
